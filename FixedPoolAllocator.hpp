@@ -3,6 +3,7 @@
 
 // #include <cstring>
 #include <strings.h>
+#include <iostream>
 
 struct Pool
 {
