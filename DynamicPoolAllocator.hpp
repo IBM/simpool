@@ -6,17 +6,17 @@
 #include "Allocator.hpp"
 #include "FixedPoolAllocator.hpp"
 
-struct Block
-{
-  char *data;
-  std::size_t size;
-  bool isHead;
-  Block *next;
-};
-
 template <class MA, class IA = CPUAllocator, std::size_t MINSIZE = (1 << 6)>
 class DynamicPoolAllocator
 {
+  struct Block
+  {
+    char *data;
+    std::size_t size;
+    bool isHead;
+    Block *next;
+  };
+
   // Allocator for the underlying data
   typedef FixedPoolAllocator<struct Block, IA, 1 << 6> BlockAlloc;
   BlockAlloc blockAllocator;

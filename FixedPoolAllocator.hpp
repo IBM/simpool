@@ -4,17 +4,17 @@
 #include <strings.h>
 #include <iostream>
 
-struct Pool
-{
-  unsigned char *data;
-  unsigned int *avail;
-  unsigned int numAvail;
-  Pool* next;
-};
-
 template<class T, class MA, int NP=(1<<6)>
 class FixedPoolAllocator
 {
+  struct Pool
+  {
+    unsigned char *data;
+    unsigned int *avail;
+    unsigned int numAvail;
+    Pool* next;
+  };
+
   struct Pool *Pool;
   const std::size_t numPerPool;
   const std::size_t totalPoolSize;
