@@ -14,11 +14,11 @@ struct Block
   Block *next;
 };
 
-template <class MA, std::size_t MINSIZE = (1 << 6)>
+template <class MA, class IA = CPUAllocator, std::size_t MINSIZE = (1 << 6)>
 class DynamicPoolAllocator
 {
   // Allocator for the underlying data
-  typedef FixedPoolAllocator<struct Block, CPUAllocator, 1 << 6> BlockAlloc;
+  typedef FixedPoolAllocator<struct Block, IA, 1 << 6> BlockAlloc;
   BlockAlloc blockAllocator;
 
   // Start of the nodes of used and free block lists
@@ -194,6 +194,10 @@ public:
   }
 
   std::size_t allocatedSize() const { return totalSize; }
+
+  std::size_t totalSize() const {
+    return totalSize + blockAllocator.totalSize();
+  }
 
   std::size_t numFreeBlocks() const {
     std::size_t nb = 0;

@@ -107,11 +107,11 @@ public:
     std::cerr << "Could not find pointer to deallocate" << std::endl;
   }
 
-  std::size_t allocatedSize() const {
-    // NOTE: Does not include overhead
-    return numBlocks * sizeof(T);
-  }
+  /// Return allocated size to user.
+  std::size_t allocatedSize() const { return numBlocks * sizeof(T); }
 
+  /// Return total size with internal overhead.
+  std::size_t totalSize() const { return totalPoolSize; }
 };
 
 
