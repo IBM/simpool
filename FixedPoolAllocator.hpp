@@ -1,7 +1,6 @@
 #ifndef _FIXEDPOOLALLOCATOR_HPP
 #define _FIXEDPOOLALLOCATOR_HPP
 
-// #include <cstring>
 #include <strings.h>
 #include <iostream>
 

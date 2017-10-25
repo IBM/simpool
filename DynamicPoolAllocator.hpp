@@ -1,12 +1,8 @@
 #ifndef DYNAMICPOOLALLOCATOR_HPP
 #define DYNAMICPOOLALLOCATOR_HPP
 
-// #include <cstdlib>
 #include <cstddef>
 #include <cassert>
-// #include <iostream>
-// #include <algorithm>
-// #include <vector>
 #include "Allocator.hpp"
 #include "FixedPoolAllocator.hpp"
 
