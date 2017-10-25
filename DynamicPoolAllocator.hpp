@@ -26,7 +26,7 @@ class DynamicPoolAllocator
   struct Block *freeBlocks;
 
   // Total size allocated in bytes
-  std::size_t totalSize;
+  std::size_t loanedSize;
 
   // Search the list of free blocks and return a usable one if that exists, else NULL
   void findUsableBlock(struct Block *&best, struct Block *&prev, std::size_t size) {
@@ -63,7 +63,7 @@ class DynamicPoolAllocator
     curr->size = allocSize;
     curr->isHead = true;
     curr->next = next;
-    totalSize += allocSize;
+    loanedSize += allocSize;
 
     // Insert
     if (prev) prev->next = curr;
@@ -89,14 +89,14 @@ class DynamicPoolAllocator
       curr->size = size;
     }
 
-    totalSize += size;
+    loanedSize += size;
     if (prev) prev->next = next;
     else freeBlocks = next;
   }
 
   void releaseBlock(struct Block *curr, struct Block *prev) {
     assert(curr != NULL);
-    totalSize -= curr->size;
+    loanedSize -= curr->size;
 
     if (prev) prev->next = curr->next;
     else usedBlocks = curr->next;
@@ -141,7 +141,7 @@ class DynamicPoolAllocator
 
     while(freeBlocks) {
       assert(freeBlocks->isHead);
-      totalSize -= freeBlocks->size;
+      loanedSize -= freeBlocks->size;
       MA::deallocate(freeBlocks->data);
       struct Block *curr = freeBlocks;
       freeBlocks = freeBlocks->next;
@@ -152,7 +152,7 @@ class DynamicPoolAllocator
 public:
 
   DynamicPoolAllocator()
-    : blockAllocator(), usedBlocks(NULL), freeBlocks(NULL), totalSize(0) { }
+    : blockAllocator(), usedBlocks(NULL), freeBlocks(NULL), loanedSize(0) { }
 
   ~DynamicPoolAllocator() { freeAllBlocks(); }
 
@@ -193,10 +193,10 @@ public:
     releaseBlock(curr, prev);
   }
 
-  std::size_t allocatedSize() const { return totalSize; }
+  std::size_t allocatedSize() const { return loanedSize; }
 
   std::size_t totalSize() const {
-    return totalSize + blockAllocator.totalSize();
+    return sizeof(*this) + allocatedSize() + blockAllocator.totalSize();
   }
 
   std::size_t numFreeBlocks() const {

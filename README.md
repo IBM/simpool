@@ -65,8 +65,10 @@ The public non-constructor/destructor methods are:
   `allocate()` above.
 - `std::size_t allocatedSize() const`: Return the allocated size,
   without internal overhead.
-- `std::size_t totalSize() const`: Return the total size of the class
-  and all allocations within.
+- `std::size_t totalSize() const`: Return the total size of all
+  allocations within.
+- `std::size_t numPools() const`: Return the number of fixed size
+  pools.
 
 ## Dynamic Type
 

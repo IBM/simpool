@@ -111,7 +111,17 @@ public:
   std::size_t allocatedSize() const { return numBlocks * sizeof(T); }
 
   /// Return total size with internal overhead.
-  std::size_t totalSize() const { return totalPoolSize; }
+  std::size_t totalSize() const {
+    return sizeof(*this) + numPools() * totalPoolSize;
+  }
+
+  /// Return the number of pools
+  std::size_t numPools() const {
+    std::size_t np = 0;
+    for (struct Block *curr = Pool; curr; curr = curr->next) np++;
+    return np;
+  }
+
 };
 
 
