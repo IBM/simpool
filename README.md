@@ -1,11 +1,9 @@
 # Simpool
-
 Simpool is a very simple pooled memory allocator that offers recipes
 for use in C++ by overloading `::operator new(std::size_t)` and
 fulfilling an STL allocator concept.
 
 ## Background
-
 The concept behind a pooled memory allocator is to reduce the number
 of system calls to allocate memory, and instead takes memory from an
 already allocated segment of memory. It can be more efficient if there
@@ -29,13 +27,11 @@ following weaknesses:
    pointers provided by the class.
 
 ## Design
-
 This code uses a series of pools to represent the internal and
 allocated memory. These pools can be in any memory space reachable
 from the thread allocation and deallocation function.
 
 ## Fixed Type
-
 The `FixedPoolAllocator<T, MA, NP>` class stores "pools" each of
 `NP*sizeof(unsigned int)*8` objects of type `T` in the memory space
 with allocator struct `MA`. An example of an allocator struct for the
@@ -71,7 +67,6 @@ The public non-constructor/destructor methods are:
   pools.
 
 ## Dynamic Type
-
 The `DynamicPoolAllocator<MA, IA, MINSIZE>` class allocates objects
 with the `MA` allocator struct, and internally keeps track of the
 blocks using a `FixedMemoryPool` using the `IA` allocator struct. Each
@@ -98,8 +93,15 @@ The public non-constructor/destructor methods are:
 - `std::size_t numFreeBlocks() const`: Return the number of free blocks.
 - `std::size_t numUsedBlocks() const`: Return the number of used blocks.
 
-## See also
+## License
+Copyright 2017 IBM Corporation. This code was developed as part of the
+Center of Excellence with Lawrence Livermore National Laboratory.
 
+## Authors
+  - Johann Dahm < johann.dahm@ibm.com > Primary contact
+
+
+## See also
 - GNU glibc `obstack`: [info page](https://www.gnu.org/software/libc/manual/html_node/Obstacks.html)
 - NVidia `cnmem`: [Github page](https://github.com/NVIDIA/cnmem)
 - Google Perftools `tcmalloc`: [website](http://goog-perftools.sourceforge.net/doc/tcmalloc.html)
