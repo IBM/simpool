@@ -12,10 +12,10 @@ class FixedPoolAllocator
     unsigned char *data;
     unsigned int *avail;
     unsigned int numAvail;
-    Pool* next;
+    struct Pool* next;
   };
 
-  struct Pool *Pool;
+  struct Pool *pool;
   const std::size_t numPerPool;
   const std::size_t totalPoolSize;
 
@@ -60,10 +60,10 @@ public:
       totalPoolSize(sizeof(struct Pool) +
                     numPerPool * sizeof(T) + NP * sizeof(unsigned int)),
       numBlocks(0)
-  { newPool(&Pool); }
+  { newPool(&pool); }
 
   ~FixedPoolAllocator() {
-    for (struct Pool *curr = Pool; curr; ) {
+    for (struct Pool *curr = pool; curr; ) {
       struct Pool *next = curr->next;
       MA::deallocate(curr);
       curr = next;
@@ -73,7 +73,7 @@ public:
   T* allocate() {
     T* ptr = NULL;
     struct Pool *prev = NULL;
-    struct Pool *curr = Pool;
+    struct Pool *curr = pool;
     while (!ptr && curr) {
       ptr = allocInPool(curr);
       prev = curr;
@@ -88,7 +88,7 @@ public:
   }
 
   void deallocate(T* ptr) {
-    for (struct Pool *curr = Pool; curr; curr = curr->next) {
+    for (struct Pool *curr = pool; curr; curr = curr->next) {
       if ( (ptr >= reinterpret_cast<T*>(curr->data)) && ptr < (reinterpret_cast<T*>(curr->data) + numPerPool) ) {
         const int indexD = ptr - reinterpret_cast<T*>(curr->data);
         const int indexI = indexD / sizeof(unsigned int) / 8;
@@ -118,7 +118,7 @@ public:
   /// Return the number of pools
   std::size_t numPools() const {
     std::size_t np = 0;
-    for (struct Block *curr = Pool; curr; curr = curr->next) np++;
+    for (struct Pool *curr = pool; curr; curr = curr->next) np++;
     return np;
   }
 
