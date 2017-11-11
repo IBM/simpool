@@ -1,14 +1,15 @@
-#ifndef DYNAMICPOOLALLOCATOR_HPP
-#define DYNAMICPOOLALLOCATOR_HPP
+#ifndef _DYNAMICPOOLALLOCATOR_HPP
+#define _DYNAMICPOOLALLOCATOR_HPP
 
 #include <cstddef>
 #include <cassert>
-#include "Allocator.hpp"
+#include "StdAllocator.hpp"
 #include "FixedPoolAllocator.hpp"
 
-template <class MA, class IA = CPUAllocator, std::size_t MINSIZE = (1 << 6)>
+template <class MA, class IA = StdAllocator>
 class DynamicPoolAllocator
 {
+protected:
   struct Block
   {
     char *data;
@@ -18,15 +19,21 @@ class DynamicPoolAllocator
   };
 
   // Allocator for the underlying data
-  typedef FixedPoolAllocator<struct Block, IA, 1 << 6> BlockAlloc;
+  typedef FixedPoolAllocator<struct Block, IA, (1<<6)> BlockAlloc;
   BlockAlloc blockAllocator;
 
   // Start of the nodes of used and free block lists
   struct Block *usedBlocks;
   struct Block *freeBlocks;
 
-  // Total size allocated in bytes
-  std::size_t loanedSize;
+  // Total size allocated (bytes)
+  std::size_t totalBytes;
+
+  // Allocated size (bytes)
+  std::size_t allocBytes;
+
+  // Minimum size for allocations
+  std::size_t minBytes;
 
   // Search the list of free blocks and return a usable one if that exists, else NULL
   void findUsableBlock(struct Block *&best, struct Block *&prev, std::size_t size) {
@@ -41,36 +48,36 @@ class DynamicPoolAllocator
   }
 
   // Allocate a new block and add it to the list of free blocks
-  void allocateBlock(struct Block *&curr, struct Block *&prev, std::size_t size) {
-    std::size_t allocSize = std::max(size, MINSIZE);
+  void allocateBlock(struct Block *&curr, struct Block *&prev, const std::size_t size) {
+    const std::size_t sizeToAlloc = std::max(size, minBytes);
     curr = prev = NULL;
     void *data = NULL;
 
     // Allocate data
-    data = MA::allocate(size);
+    data = MA::allocate(sizeToAlloc);
+    totalBytes += sizeToAlloc;
     assert(data);
 
     // Find next and prev such that next->data is still smaller than data (keep ordered)
     struct Block *next;
-    for ( next = freeBlocks; next && next->data < data ; next = next->next ) {
+    for ( next = freeBlocks; next && next->data < data; next = next->next ) {
       prev = next;
     }
 
     // Allocate the block
     curr = (struct Block *) blockAllocator.allocate();
     if (!curr) return;
-    curr->data = reinterpret_cast<char *>(data);
-    curr->size = allocSize;
+    curr->data = static_cast<char *>(data);
+    curr->size = sizeToAlloc;
     curr->isHead = true;
     curr->next = next;
-    loanedSize += allocSize;
 
     // Insert
     if (prev) prev->next = curr;
     else freeBlocks = curr;
   }
 
-  void splitBlock(struct Block *&curr, struct Block *&prev, std::size_t size) {
+  void splitBlock(struct Block *&curr, struct Block *&prev, const std::size_t size) {
     struct Block *next;
     if ( curr->size == size ) {
       // Keep it
@@ -89,14 +96,12 @@ class DynamicPoolAllocator
       curr->size = size;
     }
 
-    loanedSize += size;
     if (prev) prev->next = next;
     else freeBlocks = next;
   }
 
   void releaseBlock(struct Block *curr, struct Block *prev) {
     assert(curr != NULL);
-    loanedSize -= curr->size;
 
     if (prev) prev->next = curr->next;
     else usedBlocks = curr->next;
@@ -135,14 +140,16 @@ class DynamicPoolAllocator
   }
 
   void freeAllBlocks() {
+    // Release the used blocks
     while(usedBlocks) {
       releaseBlock(usedBlocks, NULL);
     }
 
+    // Release the unused blocks
     while(freeBlocks) {
       assert(freeBlocks->isHead);
-      loanedSize -= freeBlocks->size;
       MA::deallocate(freeBlocks->data);
+      totalBytes -= freeBlocks->size;
       struct Block *curr = freeBlocks;
       freeBlocks = freeBlocks->next;
       blockAllocator.deallocate(curr);
@@ -150,16 +157,20 @@ class DynamicPoolAllocator
   }
 
 public:
-
-  DynamicPoolAllocator()
-    : blockAllocator(), usedBlocks(NULL), freeBlocks(NULL), loanedSize(0) { }
-
-  ~DynamicPoolAllocator() { freeAllBlocks(); }
-
   static inline DynamicPoolAllocator &getInstance() {
     static DynamicPoolAllocator instance;
     return instance;
   }
+
+  DynamicPoolAllocator(const std::size_t _minBytes = (1 << 8))
+    : blockAllocator(),
+      usedBlocks(NULL),
+      freeBlocks(NULL),
+      totalBytes(0),
+      allocBytes(0),
+      minBytes(_minBytes) { }
+
+  ~DynamicPoolAllocator() { freeAllBlocks(); }
 
   void *allocate(std::size_t size) {
     struct Block *best, *prev;
@@ -176,6 +187,9 @@ public:
     best->next = usedBlocks;
     usedBlocks = best;
 
+    // Increment the allocated size
+    allocBytes += size;
+
     // Return the new pointer
     return usedBlocks->data;
   }
@@ -183,20 +197,24 @@ public:
   void deallocate(void *ptr) {
     assert(ptr);
 
+    // Find the associated block
     struct Block *curr = usedBlocks, *prev = NULL;
-    for ( ; curr && curr->data != ptr ; curr = curr->next ) {
+    for ( ; curr && curr->data != ptr; curr = curr->next ) {
       prev = curr;
     }
-
     if (!curr) return;
 
+    // Remove from allocBytes
+    allocBytes -= curr->size;
+
+    // Release it
     releaseBlock(curr, prev);
   }
 
-  std::size_t allocatedSize() const { return loanedSize; }
+  std::size_t allocatedSize() const { return allocBytes; }
 
   std::size_t totalSize() const {
-    return sizeof(*this) + allocatedSize() + blockAllocator.totalSize();
+    return totalBytes + blockAllocator.totalSize();
   }
 
   std::size_t numFreeBlocks() const {

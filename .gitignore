@@ -1,5 +1,8 @@
-testAlloc
-testFixed
-testDynamic
+testCompile
+testSingleton
+testFixedPool
+testDynamicPool
+testSTL
+testNew
 
 *.dSYM/

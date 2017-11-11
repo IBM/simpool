@@ -7,6 +7,7 @@
 template<class T, class MA, int NP=(1<<6)>
 class FixedPoolAllocator
 {
+protected:
   struct Pool
   {
     unsigned char *data;
@@ -72,6 +73,7 @@ public:
 
   T* allocate() {
     T* ptr = NULL;
+
     struct Pool *prev = NULL;
     struct Pool *curr = pool;
     while (!ptr && curr) {
@@ -79,17 +81,25 @@ public:
       prev = curr;
       curr = curr->next;
     }
+
     if (!ptr) {
       newPool(&prev->next);
-      allocate();
+      ptr = allocate();
+      // TODO: In this case we should reverse the linked list for optimality
     }
-    numBlocks++;
+    else {
+      numBlocks++;
+    }
     return ptr;
   }
 
   void deallocate(T* ptr) {
+    int i = 0;
     for (struct Pool *curr = pool; curr; curr = curr->next) {
-      if ( (ptr >= reinterpret_cast<T*>(curr->data)) && ptr < (reinterpret_cast<T*>(curr->data) + numPerPool) ) {
+      const T* start = reinterpret_cast<T*>(curr->data);
+      const T* end   = reinterpret_cast<T*>(curr->data) + numPerPool;
+      if ( (ptr >= start) && (ptr < end) ) {
+        // indexes bits 0 - numPerPool-1
         const int indexD = ptr - reinterpret_cast<T*>(curr->data);
         const int indexI = indexD / sizeof(unsigned int) / 8;
         const int indexB = indexD % ( sizeof(unsigned int) * 8 );
@@ -103,8 +113,10 @@ public:
         numBlocks--;
         return;
       }
+      i++;
     }
     std::cerr << "Could not find pointer to deallocate" << std::endl;
+    throw(std::bad_alloc());
   }
 
   /// Return allocated size to user.
@@ -112,7 +124,7 @@ public:
 
   /// Return total size with internal overhead.
   std::size_t totalSize() const {
-    return sizeof(*this) + numPools() * totalPoolSize;
+    return numPools() * totalPoolSize;
   }
 
   /// Return the number of pools
@@ -122,6 +134,8 @@ public:
     return np;
   }
 
+  /// Return the pool size
+  std::size_t poolSize() const { return totalPoolSize; }
 };
 
 
