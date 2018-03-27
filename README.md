@@ -94,11 +94,10 @@ The public non-constructor/destructor methods are:
 - `std::size_t numUsedBlocks() const`: Return the number of used blocks.
 
 ## License
-Copyright 2017 IBM Corporation. This code was developed as part of the
-Center of Excellence with Lawrence Livermore National Laboratory.
+&copy; Copyright 2017 IBM Corporation. MIT License.
 
 ## Authors
-  - Johann Dahm < johann.dahm@ibm.com > Primary contact
+  - Johann Dahm <<johann.dahm@ibm.com>> Primary contact
 
 
 ## See also
