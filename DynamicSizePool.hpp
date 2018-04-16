@@ -47,9 +47,14 @@ protected:
     }
   }
 
+  inline std::size_t alignmentAdjust(const std::size_t size) {
+    const std::size_t AlignmentBoundary = 16;
+    return std::size_t (size + (AlignmentBoundary-1)) & ~(AlignmentBoundary-1);
+  }
+
   // Allocate a new block and add it to the list of free blocks
   void allocateBlock(struct Block *&curr, struct Block *&prev, const std::size_t size) {
-    const std::size_t sizeToAlloc = std::max(size, minBytes);
+    const std::size_t sizeToAlloc = std::max(alignmentAdjust(size), minBytes);
     curr = prev = NULL;
     void *data = NULL;
 
@@ -79,7 +84,9 @@ protected:
 
   void splitBlock(struct Block *&curr, struct Block *&prev, const std::size_t size) {
     struct Block *next;
-    if ( curr->size == size ) {
+    const std::size_t alignedsize = alignmentAdjust(size);
+
+    if ( curr->size == size || curr->size == alignedsize ) {
       // Keep it
       next = curr->next;
     }
