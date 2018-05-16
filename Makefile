@@ -1,4 +1,4 @@
-#config.mk can overwrite these defaults
+# config.mk can overwrite these defaults
 -include config.mk
 
 CXX ?= clang++

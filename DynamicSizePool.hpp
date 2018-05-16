@@ -19,7 +19,7 @@ protected:
   };
 
   // Allocator for the underlying data
-  typedef FixedSizePool<struct Block, IA, (1<<6)> BlockPool;
+  typedef FixedSizePool<struct Block, IA, IA, (1<<6)> BlockPool;
   BlockPool blockPool;
 
   // Start of the nodes of used and free block lists
