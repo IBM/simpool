@@ -1,4 +1,4 @@
-#include "DynamicPoolAllocator.hpp"
+#include "DynamicSizePool.hpp"
 #include "StdAllocator.hpp"
 #include "AllocatorTest.hpp"
 
@@ -6,7 +6,7 @@
 
 typedef void* PtrType;
 typedef std::list< PtrType, STLAllocator<PtrType> > ListType;
-typedef DynamicPoolAllocator<AllocatorType> PoolType;
+typedef DynamicSizePool<AllocatorType> PoolType;
 
 std::size_t rand_int(const std::size_t min, const std::size_t max) {
   return min + static_cast<float>(std::rand()) / RAND_MAX * (max - min);
@@ -20,6 +20,6 @@ int main() {
     L.push_back(PoolType::getInstance().allocate(rand_int(0, (1<<20))));
   }
   for (PtrType &v : L) PoolType::getInstance().deallocate(v);
-    
+
   return 0;
 }

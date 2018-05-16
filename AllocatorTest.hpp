@@ -10,7 +10,7 @@
 #include <limits>
 
 #include "StdAllocator.hpp"
-#include "DynamicPoolAllocator.hpp"
+#include "DynamicSizePool.hpp"
 
 // If USE_CUDA is defined, test with a managed allocation
 #if defined(USE_CUDA)
@@ -81,7 +81,7 @@ struct STLAllocator {
   typedef T value_type;
   typedef std::size_t size_type;
 
-  typedef DynamicPoolAllocator<AllocatorType> PoolType;
+  typedef DynamicSizePool<AllocatorType> PoolType;
 
   PoolType &m;
 
@@ -105,22 +105,22 @@ bool operator!=(const STLAllocator<T>&, const STLAllocator<U>&) { return false; 
 
 void *operator new (std::size_t size) throw (std::bad_alloc)
 {
-  return DynamicPoolAllocator<AllocatorType>::getInstance().allocate(size);
+  return DynamicSizePool<AllocatorType>::getInstance().allocate(size);
 }
 
 void *operator new[] (std::size_t size) throw (std::bad_alloc)
 {
-  return DynamicPoolAllocator<AllocatorType>::getInstance().allocate(size);
+  return DynamicSizePool<AllocatorType>::getInstance().allocate(size);
 }
 
 void operator delete (void *ptr) throw()
 {
-  return DynamicPoolAllocator<AllocatorType>::getInstance().deallocate(ptr);
+  return DynamicSizePool<AllocatorType>::getInstance().deallocate(ptr);
 }
 
 void operator delete[] (void *ptr) throw()
 {
-  return DynamicPoolAllocator<AllocatorType>::getInstance().deallocate(ptr);
+  return DynamicSizePool<AllocatorType>::getInstance().deallocate(ptr);
 }
 
 #endif

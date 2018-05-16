@@ -1,9 +1,9 @@
-#include "FixedPoolAllocator.hpp"
-#include "DynamicPoolAllocator.hpp"
+#include "FixedSizePool.hpp"
+#include "DynamicSizePool.hpp"
 #include "StdAllocator.hpp"
 
-typedef FixedPoolAllocator<int, StdAllocator> FPA;
-typedef DynamicPoolAllocator<StdAllocator, StdAllocator> DPA;
+typedef FixedSizePool<int, StdAllocator> FPA;
+typedef DynamicSizePool<StdAllocator, StdAllocator> DPA;
 
 int main() {
   FPA& fpa = FPA::getInstance();

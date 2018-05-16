@@ -18,8 +18,8 @@ endif
 endif
 
 HEADERS=StdAllocator.hpp \
-	FixedPoolAllocator.hpp \
-	DynamicPoolAllocator.hpp
+	FixedSizePool.hpp \
+	DynamicSizePool.hpp
 
 TESTS=testCompile \
       testSingleton \

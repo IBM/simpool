@@ -1,13 +1,13 @@
-#ifndef _DYNAMICPOOLALLOCATOR_HPP
-#define _DYNAMICPOOLALLOCATOR_HPP
+#ifndef _DYNAMICSIZEPOOL_HPP
+#define _DYNAMICSIZEPOOL_HPP
 
 #include <cstddef>
 #include <cassert>
 #include "StdAllocator.hpp"
-#include "FixedPoolAllocator.hpp"
+#include "FixedSizePool.hpp"
 
 template <class MA, class IA = StdAllocator>
-class DynamicPoolAllocator
+class DynamicSizePool
 {
 protected:
   struct Block
@@ -19,8 +19,8 @@ protected:
   };
 
   // Allocator for the underlying data
-  typedef FixedPoolAllocator<struct Block, IA, (1<<6)> BlockAlloc;
-  BlockAlloc blockAllocator;
+  typedef FixedSizePool<struct Block, IA, (1<<6)> BlockPool;
+  BlockPool blockPool;
 
   // Start of the nodes of used and free block lists
   struct Block *usedBlocks;
@@ -65,7 +65,7 @@ protected:
     }
 
     // Allocate the block
-    curr = (struct Block *) blockAllocator.allocate();
+    curr = (struct Block *) blockPool.allocate();
     if (!curr) return;
     curr->data = static_cast<char *>(data);
     curr->size = sizeToAlloc;
@@ -86,7 +86,7 @@ protected:
     else {
       // Split the block
       std::size_t remaining = curr->size - size;
-      struct Block *newBlock = (struct Block *) blockAllocator.allocate();
+      struct Block *newBlock = (struct Block *) blockPool.allocate();
       if (!newBlock) return;
       newBlock->data = curr->data + size;
       newBlock->size = remaining;
@@ -118,7 +118,7 @@ protected:
     // Check if prev and curr can be merged
     if ( prev && prev->data + prev->size == curr->data && !curr->isHead ) {
       prev->size = prev->size + curr->size;
-      blockAllocator.deallocate(curr); // keep data
+      blockPool.deallocate(curr); // keep data
       curr = prev;
     }
     else if (prev) {
@@ -132,7 +132,7 @@ protected:
     if ( next && curr->data + curr->size == next->data && !next->isHead ) {
       curr->size = curr->size + next->size;
       curr->next = next->next;
-      blockAllocator.deallocate(next); // keep data
+      blockPool.deallocate(next); // keep data
     }
     else {
       curr->next = next;
@@ -152,25 +152,25 @@ protected:
       totalBytes -= freeBlocks->size;
       struct Block *curr = freeBlocks;
       freeBlocks = freeBlocks->next;
-      blockAllocator.deallocate(curr);
+      blockPool.deallocate(curr);
     }
   }
 
 public:
-  static inline DynamicPoolAllocator &getInstance() {
-    static DynamicPoolAllocator instance;
+  static inline DynamicSizePool &getInstance() {
+    static DynamicSizePool instance;
     return instance;
   }
 
-  DynamicPoolAllocator(const std::size_t _minBytes = (1 << 8))
-    : blockAllocator(),
+  DynamicSizePool(const std::size_t _minBytes = (1 << 8))
+    : blockPool(),
       usedBlocks(NULL),
       freeBlocks(NULL),
       totalBytes(0),
       allocBytes(0),
       minBytes(_minBytes) { }
 
-  ~DynamicPoolAllocator() { freeAllBlocks(); }
+  ~DynamicSizePool() { freeAllBlocks(); }
 
   void *allocate(std::size_t size) {
     struct Block *best, *prev;
@@ -214,7 +214,7 @@ public:
   std::size_t allocatedSize() const { return allocBytes; }
 
   std::size_t totalSize() const {
-    return totalBytes + blockAllocator.totalSize();
+    return totalBytes + blockPool.totalSize();
   }
 
   std::size_t numFreeBlocks() const {

@@ -32,7 +32,7 @@ allocated memory. These pools can be in any memory space reachable
 from the thread allocation and deallocation function.
 
 ## Fixed Type
-The `FixedPoolAllocator<T, MA, NP>` class stores "pools" each of
+The `FixedSizePool<T, MA, NP>` class stores "pools" each of
 `NP*sizeof(unsigned int)*8` objects of type `T` in the memory space
 with allocator struct `MA`. An example of an allocator struct for the
 system `malloc()/free()` methods:
@@ -67,7 +67,7 @@ The public non-constructor/destructor methods are:
   pools.
 
 ## Dynamic Type
-The `DynamicPoolAllocator<MA, IA, MINSIZE>` class allocates objects
+The `DynamicSizePool<MA, IA, MINSIZE>` class allocates objects
 with the `MA` allocator struct, and internally keeps track of the
 blocks using a `FixedMemoryPool` using the `IA` allocator struct. Each
 of the blocks allocated with `MA` are at least size `MINSIZE` - smaller

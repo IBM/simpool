@@ -1,11 +1,11 @@
-#ifndef _FIXEDPOOLALLOCATOR_HPP
-#define _FIXEDPOOLALLOCATOR_HPP
+#ifndef _FIXEDSIZEPOOL_HPP
+#define _FIXEDSIZEPOOL_HPP
 
 #include <strings.h>
 #include <iostream>
 
 template<class T, class MA, int NP=(1<<6)>
-class FixedPoolAllocator
+class FixedSizePool
 {
 protected:
   struct Pool
@@ -51,19 +51,19 @@ protected:
   }
 
 public:
-  static inline FixedPoolAllocator &getInstance() {
-    static FixedPoolAllocator instance;
+  static inline FixedSizePool &getInstance() {
+    static FixedSizePool instance;
     return instance;
   }
 
-  FixedPoolAllocator()
+  FixedSizePool()
     : numPerPool(NP * sizeof(unsigned int) * 8),
       totalPoolSize(sizeof(struct Pool) +
                     numPerPool * sizeof(T) + NP * sizeof(unsigned int)),
       numBlocks(0)
   { newPool(&pool); }
 
-  ~FixedPoolAllocator() {
+  ~FixedSizePool() {
     for (struct Pool *curr = pool; curr; ) {
       struct Pool *next = curr->next;
       MA::deallocate(curr);
