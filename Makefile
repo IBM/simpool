@@ -1,8 +1,8 @@
--include config.h
+#config.mk can overwrite these defaults
+-include config.mk
 
-# config.h can overwrite these defaults
 CXX ?= clang++
-CXXFLAGS ?= -O3
+CXXFLAGS ?= -O1 -g
 LDFLAGS ?=
 
 # Defines for testing
@@ -21,12 +21,7 @@ HEADERS=StdAllocator.hpp \
 	FixedSizePool.hpp \
 	DynamicSizePool.hpp
 
-TESTS=testCompile \
-      testSingleton \
-      testFixedPool \
-      testDynamicPool \
-      testSTL \
-      testNew
+TESTS=$(patsubst %.cpp, %, $(wildcard test-*.cpp))
 
 all: $(TESTS)
 
