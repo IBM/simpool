@@ -1,10 +1,14 @@
 #ifndef _FIXEDSIZEPOOL_HPP
 #define _FIXEDSIZEPOOL_HPP
 
+#include <cstring>
+#define  _XOPEN_SOURCE_EXTENDED 1
 #include <strings.h>
 #include <iostream>
+#include <stdio.h>
+#include "StdAllocator.hpp"
 
-template<class T, class MA, int NP=(1<<6)>
+template<class T, class MA, class IA = StdAllocator, int NP=(1<<6)>
 class FixedSizePool
 {
 protected:
@@ -23,12 +27,12 @@ protected:
   std::size_t numBlocks;
 
   void newPool(struct Pool **pnew) {
-    struct Pool *p = static_cast<struct Pool *>(MA::allocate(totalPoolSize));
+    struct Pool *p = static_cast<struct Pool *>(IA::allocate(sizeof(struct Pool) + NP * sizeof(unsigned int)));
     p->numAvail = numPerPool;
     p->next = NULL;
 
-    p->data  = reinterpret_cast<unsigned char *>(p) + sizeof(struct Pool);
-    p->avail = reinterpret_cast<unsigned int *>(p->data + numPerPool * sizeof(T));
+    p->data  = reinterpret_cast<unsigned char*>(MA::allocate(numPerPool * sizeof(T)));
+    p->avail = reinterpret_cast<unsigned int *>(p + 1);
     for (int i = 0; i < NP; i++) p->avail[i] = -1;
 
     *pnew = p;
@@ -38,11 +42,11 @@ protected:
     if (!p->numAvail) return NULL;
 
     for (int i = 0; i < NP; i++) {
-      int bit = ffs(p->avail[i]) - 1;
+      const int bit = ffs(p->avail[i]) - 1;
       if (bit >= 0) {
         p->avail[i] ^= 1 << bit;
         p->numAvail--;
-        int entry = i * sizeof(unsigned int) * 8 + bit;
+        const int entry = i * sizeof(unsigned int) * 8 + bit;
         return reinterpret_cast<T*>(p->data) + entry;
       }
     }
@@ -59,7 +63,8 @@ public:
   FixedSizePool()
     : numPerPool(NP * sizeof(unsigned int) * 8),
       totalPoolSize(sizeof(struct Pool) +
-                    numPerPool * sizeof(T) + NP * sizeof(unsigned int)),
+		    numPerPool * sizeof(T) +
+                    NP * sizeof(unsigned int)),
       numBlocks(0)
   { newPool(&pool); }
 
@@ -101,12 +106,12 @@ public:
       if ( (ptr >= start) && (ptr < end) ) {
         // indexes bits 0 - numPerPool-1
         const int indexD = ptr - reinterpret_cast<T*>(curr->data);
-        const int indexI = indexD / sizeof(unsigned int) / 8;
+        const int indexI = indexD / ( sizeof(unsigned int) * 8 );
         const int indexB = indexD % ( sizeof(unsigned int) * 8 );
-#ifdef NDEBUG
-        if (!((curr->avail[indexI] >> indexB) & 1))
-          std::cerr << "Trying to deallocate an entry that was not marked as allocated"
-                    << std::endl;
+#ifndef NDEBUG
+        if ((curr->avail[indexI] & (1 << indexB))) {
+          std::cerr << "Trying to deallocate an entry that was not marked as allocated" << std::endl;
+	}
 #endif
         curr->avail[indexI] ^= 1 << indexB;
         curr->numAvail++;
@@ -139,4 +144,4 @@ public:
 };
 
 
-#endif // _FIXEDPOOLALLOCATOR_HPP
+#endif // _FIXEDSIZEPOOL_HPP

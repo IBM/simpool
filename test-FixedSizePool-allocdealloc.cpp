@@ -7,7 +7,7 @@
 #include <stack>
 
 typedef int ValueType;
-typedef FixedSizePool<ValueType, StdAllocator, (1<<1)> PoolType;
+typedef FixedSizePool<ValueType, StdAllocator, StdAllocator, (1<<1)> PoolType;
 
 std::size_t rand_int(const std::size_t min, const std::size_t max) {
   return min + static_cast<float>(std::rand()) / RAND_MAX * (max - min);

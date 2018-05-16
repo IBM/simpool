@@ -19,7 +19,7 @@ protected:
   };
 
   // Allocator for the underlying data
-  typedef FixedSizePool<struct Block, IA, (1<<6)> BlockPool;
+  typedef FixedSizePool<struct Block, IA, IA, (1<<6)> BlockPool;
   BlockPool blockPool;
 
   // Start of the nodes of used and free block lists
@@ -47,14 +47,9 @@ protected:
     }
   }
 
-  inline std::size_t alignmentAdjust(const std::size_t size) {
-    const std::size_t AlignmentBoundary = 16;
-    return std::size_t (size + (AlignmentBoundary-1)) & ~(AlignmentBoundary-1);
-  }
-
   // Allocate a new block and add it to the list of free blocks
   void allocateBlock(struct Block *&curr, struct Block *&prev, const std::size_t size) {
-    const std::size_t sizeToAlloc = std::max(alignmentAdjust(size), minBytes);
+    const std::size_t sizeToAlloc = std::max(size, minBytes);
     curr = prev = NULL;
     void *data = NULL;
 
@@ -84,9 +79,8 @@ protected:
 
   void splitBlock(struct Block *&curr, struct Block *&prev, const std::size_t size) {
     struct Block *next;
-    const std::size_t alignedsize = alignmentAdjust(size);
 
-    if ( curr->size == size || curr->size == alignedsize ) {
+    if ( curr->size == size ) {
       // Keep it
       next = curr->next;
     }
