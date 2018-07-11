@@ -2,7 +2,7 @@
 -include config.mk
 
 CXX ?= clang++
-CXXFLAGS ?= -O1 -g
+CXXFLAGS ?= -O3
 LDFLAGS ?=
 
 # Defines for testing
